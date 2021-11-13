@@ -62,7 +62,7 @@ fn create_pull_request(
 
     // The variable is initialized with the command to create the pull request using Github CLI
     let create_pr_command = format!(
-        "gh pr create -t \"{}\" -b \"{}\" -B {} -d -a @me",
+        "gh pr create -t \"{}\" -b \"{}\" -B {} -d -a @me -o",
         title.to_string(), description.to_string(), base_branch.to_string()
     ).to_string();
 
@@ -94,8 +94,6 @@ pub fn gen<'a>(
 
     let logs = commit_logs.unwrap();
 
-    // Second, define a string variable to store pr_description from the commit logs, issue link, pr types, pr template string.
-
     // Define a tuple to store the result from calling `get_pr_details` function.
     let pr_details = get_pr_details(is_feature_branch);
 
@@ -108,7 +106,11 @@ pub fn gen<'a>(
     );
     
     // Then create a pull request with the `create_pull_request` function. 
-    create_pull_request(title, description, base_branch);
+    let final = create_pull_request(title, pr_description, base_branch);
+    if final.is_err() {
+        println!("{}", final.unwrap_err());
+        return;
+    }
 }
 
 // Function: takes input boolean is_feature, and returns a tuple with the why_description as string, screenshot_description as string
@@ -129,15 +131,7 @@ fn get_pr_details(is_feature_branch: bool) -> (String, String) {
 
 // Function: input a String, capitalize the first letter of first word in the string, and add prefix `- ` to the string
 fn format_commit_log(string: &str) -> String {
-    // Define a variable of type String.
-    // The variable is initialized with the string.
-    let mut string = string.to_string();
-
-    // Capitalize the first letter of the first word in the string.
-    // string.chars_mut().next().map(|c| c.make_ascii_uppercase());
-
-    // Add prefix `- ` to the string.
-    return format!("- {}", string);
+    return format!("- {}", string.to_string());
 }
 
 // Function: input a String key name, and return the value to that key from .env file
