@@ -1,6 +1,6 @@
 // use std::path::PathBuf;
 use structopt::StructOpt;
-mod pull_request_gen;
+mod pr;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "gen-pr", about = "Generate Pull request according to commit logs and given template")]
@@ -35,7 +35,5 @@ fn main() {
     let args = CustomOpt::from_args();
 
     // list all the values in args
-    pull_request_gen::gen(&args.title, &args.issue_link, &args.base_branch, &args.extra_description, args.feature);
-
-    println!("Hello, world! {}", args.title);
+    pr::pull_request_creator::gen(&args.title, &args.issue_link, &args.base_branch, &args.extra_description, args.feature, args.debug);
 }
