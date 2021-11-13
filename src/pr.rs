@@ -30,7 +30,6 @@ pub mod pull_request_creator {
         }
 
         log_debug("Successfully got commit logs", is_debug);
-
         let logs = commit_logs.unwrap();
 
         // Define a tuple to store the result from calling `get_pr_details` function.
@@ -51,6 +50,7 @@ pub mod pull_request_creator {
         let pr = PullRequest{
             title: title.to_string(),
             pr_description: pr_description,
+
             base_branch: base.to_string(),
         };
                 
@@ -89,7 +89,7 @@ pub mod pull_request_creator {
                 // Return the error.
                 return Err("Failed to push the branch.");
             }
-
+          
             log_debug("Successfully pushed pull request to remote branch", is_debug);
 
             // The variable is initialized with the command to create the pull request using Github CLI
@@ -99,6 +99,12 @@ pub mod pull_request_creator {
             ).to_string();
 
             log_debug(&create_pr_command, is_debug);
+
+            // The variable is initialized with the command to create the pull request using Github CLI
+            let create_pr_command = format!(
+                "gh pr create -t \"{}\" -b \"{}\" -B {} -d -a @me -o",
+                self.title, self.pr_description, self.base_branch
+            ).to_string();
 
             return run_command(&create_pr_command);
         }
