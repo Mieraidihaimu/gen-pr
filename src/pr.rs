@@ -11,6 +11,7 @@ pub mod pull_request_creator {
         base_branch: &'a str,
         issue_link: &'a str,
         is_feature_branch: bool,
+        is_open_url: bool,
         is_debug: bool
     ) {
         // Get a base branch name from .env file if it exists. Otherwise return the default value `main`
@@ -24,10 +25,11 @@ pub mod pull_request_creator {
         // First, define a string variable to store all the commit logs from running `get_commit_logs` function.
         let commit_logs = get_commit_logs(base);
         if commit_logs.is_err() {
-            println!("{}", commit_logs.unwrap_err());
+            log_debug(commit_logs.unwrap_err(), is_debug);
             return;
         }
 
+        log_debug("Successfully got commit logs", is_debug);
         let logs = commit_logs.unwrap();
 
         // Define a tuple to store the result from calling `get_pr_details` function.
@@ -42,19 +44,31 @@ pub mod pull_request_creator {
             pr_details.1.to_string()
         );
 
+        log_debug("Successfully prepared pull request description", is_debug);
+
         // Then create a pull request with the `create_pull_request` function. 
         let pr = PullRequest{
             title: title.to_string(),
             pr_description: pr_description,
-            base_branch: base_branch.to_string(),
+
+            base_branch: base.to_string(),
         };
                 
-        let run_create = pr.create();
+        let run_create = pr.create(is_debug);
 
-        if run_create.is_err() && is_debug{
-            println!("{}", run_create.unwrap_err());
+        if run_create.is_err(){
+            log_debug(run_create.unwrap_err(), is_debug);
             return;
         }
+
+        if is_open_url {
+            let open_url = format!("open {}", run_create.unwrap());
+            if run_command(&open_url).is_err() {
+                log_debug("Failed to open the pull request url", is_debug);
+            }
+        }
+
+        log_debug("Successfully created pull request", is_debug);
     }
 
     // Create a struct to hold the pull request information
@@ -67,7 +81,7 @@ pub mod pull_request_creator {
     // Add implemntation for the PullRequest struct
     impl PullRequest {        
         // Function: create a pull request from the base branch to the head branch, and takes description, title, and base branch as input
-        fn create(&self) -> Result<String, &'static str> {
+        fn create(&self, is_debug: bool) -> Result<String, &'static str> {
             // Push the current branch to Github repository.
             let push_branch_command = format!("git push -u origin HEAD");
             // run the command with `run_command` function and check if the comman is successful
@@ -75,6 +89,16 @@ pub mod pull_request_creator {
                 // Return the error.
                 return Err("Failed to push the branch.");
             }
+          
+            log_debug("Successfully pushed pull request to remote branch", is_debug);
+
+            // The variable is initialized with the command to create the pull request using Github CLI
+            let create_pr_command = format!(
+                "gh pr create -t \"{}\" -b \"{}\" -B {} -d -a @me",
+                self.title, self.pr_description, self.base_branch
+            ).to_string();
+
+            log_debug(&create_pr_command, is_debug);
 
             // The variable is initialized with the command to create the pull request using Github CLI
             let create_pr_command = format!(
@@ -83,6 +107,13 @@ pub mod pull_request_creator {
             ).to_string();
 
             return run_command(&create_pr_command);
+        }
+    }
+
+    // Function: Log that gets is_dubug value and print the message if it is true
+    fn log_debug(message: &str, is_debug: bool) {
+        if is_debug {
+            println!("{}", message);
         }
     }
 
