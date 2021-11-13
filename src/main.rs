@@ -5,8 +5,8 @@ mod pull_request_gen;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "gen-pr", about = "Generate Pull request according to commit logs and given template")]
 struct CustomOpt {
-    // short and long flags (-d, --debug) will be deduced from the field's name
-    #[structopt(short, long)]
+    // short flag (-d) that represents if we need to print out the logs
+    #[structopt(short)]
     debug: bool,
 
     /// Set base branch
@@ -28,6 +28,10 @@ struct CustomOpt {
     // short and long flags (-f, --feature) that represent if it's a feature branch
     #[structopt(short = "f", long = "feature")]
     feature: bool,
+
+    // short flag (-o) that represents if open pull request url after its creation
+    #[structopt(short = "o")]
+    open: bool,
 }
 
 
@@ -35,7 +39,11 @@ fn main() {
     let args = CustomOpt::from_args();
 
     // list all the values in args
+<<<<<<< Updated upstream
     pull_request_gen::gen(&args.title, &args.issue_link, &args.base_branch, &args.extra_description, args.feature);
 
     println!("Hello, world! {}", args.title);
+=======
+    pr::pull_request_creator::gen(&args.title, &args.extra_description, &args.base_branch, &args.issue_link, args.feature, args.open, args.debug);
+>>>>>>> Stashed changes
 }
