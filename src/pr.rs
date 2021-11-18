@@ -36,7 +36,7 @@ pub mod pull_request_creator {
         let pr_details = get_pr_details(is_feature_branch);
 
         let pr_description = format!(
-            "#Related links\n\n{}\n\n#Why\n\n{}\n\n#How\n\nChanges included in this pull request:\n{}\n\n{}\n#Screenshots\n\n{}\n\n",
+            "# Related links\n\n{}\n\n# Why\n\n{}\n\n# How\n\nChanges included in this pull request:\n{}\n\n{}\n#Screenshots\n\n{}\n\n",
             issue.to_string(),
             pr_details.0.to_string(),
             logs.to_string(),
@@ -50,7 +50,6 @@ pub mod pull_request_creator {
         let pr = PullRequest{
             title: title.to_string(),
             pr_description: pr_description,
-
             base_branch: base.to_string(),
         };
                 
@@ -94,17 +93,11 @@ pub mod pull_request_creator {
 
             // The variable is initialized with the command to create the pull request using Github CLI
             let create_pr_command = format!(
-                "gh pr create -t \"{}\" -b \"{}\" -B {} -d -a @me",
+                "gh pr create -t \"{}\" -b \"{}\" -B \"{}\" -d -a @me",
                 self.title, self.pr_description, self.base_branch
             ).to_string();
 
             log_debug(&create_pr_command, is_debug);
-
-            // The variable is initialized with the command to create the pull request using Github CLI
-            let create_pr_command = format!(
-                "gh pr create -t \"{}\" -b \"{}\" -B {} -d -a @me -o",
-                self.title, self.pr_description, self.base_branch
-            ).to_string();
 
             return run_command(&create_pr_command);
         }
