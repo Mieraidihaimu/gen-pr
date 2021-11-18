@@ -16,7 +16,7 @@ pub mod pull_request_creator {
     ) {
         // Get a base branch name from .env file if it exists. Otherwise return the default value `main`
         let env_base_branch =
-            get_env_value(String::from("BASE_BRANCH")).unwrap_or("main".to_string());
+            get_env_value(String::from("BASE_BRANCH")).unwrap_or_else(|_| "main".to_string());
         let base = if base_branch.is_empty() {
             &env_base_branch
         } else {
@@ -27,15 +27,15 @@ pub mod pull_request_creator {
         let mut pr_prefix = String::from("");
         if !issue_link.is_empty() {
             let issue_prefix =
-                get_env_value(String::from("ISSUE_PREFIX")).unwrap_or("".to_string());
+                get_env_value(String::from("ISSUE_PREFIX")).unwrap_or_else(|_| "".to_string());
             let issue = issue_prefix + issue_link;
             pr_prefix = format!("# Related links\n\n{}\n\n", issue);
         }
 
         // First, define a string variable to store all the commit logs from running `get_commit_logs` function.
         let commit_logs = get_commit_logs(base);
-        if commit_logs.is_err() {
-            log_debug(commit_logs.unwrap_err(), is_debug);
+        if let Err(err) = commit_logs {
+            log_debug(err, is_debug);
             return;
         }
 
@@ -47,11 +47,11 @@ pub mod pull_request_creator {
 
         let pr_description = format!(
             "{}# Why\n\n{}\n\n# How\n\nChanges included in this pull request:\n{}\n\n{}\n#Screenshots\n\n{}\n\n",
-            pr_prefix.to_string(),
-            pr_details.0.to_string(),
-            logs.to_string(),
+            pr_prefix,
+            pr_details.0,
+            logs,
             extra_description.to_string(),
-            pr_details.1.to_string()
+            pr_details.1
         );
 
         log_debug("Successfully prepared pull request description", is_debug);
@@ -59,14 +59,14 @@ pub mod pull_request_creator {
         // Then create a pull request with the `create_pull_request` function.
         let pr = PullRequest {
             title: title.to_string(),
-            pr_description: pr_description,
+            pr_description,
             base_branch: base.to_string(),
         };
 
         let run_create = pr.create(is_debug);
 
-        if run_create.is_err() {
-            log_debug(run_create.unwrap_err(), is_debug);
+        if let Err(err) = run_create {
+            log_debug(err, is_debug);
             return;
         }
 
@@ -77,7 +77,7 @@ pub mod pull_request_creator {
             }
         }
 
-        log_debug("Successfully created pull request", is_debug);
+        log_debug("Successfully created pull request", is_debug)
     }
 
     // Create a struct to hold the pull request information
@@ -92,7 +92,7 @@ pub mod pull_request_creator {
         // Function: create a pull request from the base branch to the head branch, and takes description, title, and base branch as input
         fn create(&self, is_debug: bool) -> Result<String, &'static str> {
             // Push the current branch to Github repository.
-            let push_branch_command = format!("git push -u origin HEAD");
+            let push_branch_command = "git push -u origin HEAD".to_string();
             // run the command with `run_command` function and check if the comman is successful
             if run_command(&push_branch_command).is_err() {
                 // Return the error.
@@ -108,19 +108,18 @@ pub mod pull_request_creator {
             let create_pr_command = format!(
                 "gh pr create -t \"{}\" -b \"{}\" -B \"{}\" -d -a @me",
                 self.title, self.pr_description, self.base_branch
-            )
-            .to_string();
+            );
 
             log_debug(&create_pr_command, is_debug);
 
-            return run_command(&create_pr_command);
+            run_command(&create_pr_command)
         }
     }
 
     // Function: Log that gets is_dubug value and print the message if it is true
     fn log_debug(message: &str, is_debug: bool) {
         if is_debug {
-            println!("{}", message);
+            println!("{}", message)
         }
     }
 
@@ -144,7 +143,7 @@ pub mod pull_request_creator {
         let lines = output.split('\n').map(|line| format_commit_log(line));
 
         // Join the lines with `\n` and return the result.
-        return Ok(lines.collect::<Vec<String>>().join("\n"));
+        Ok(lines.collect::<Vec<String>>().join("\n"))
     }
 
     // Function: input a command and output is the output of the command
@@ -159,7 +158,7 @@ pub mod pull_request_creator {
         // check the cmd status code and return the error if the status code is not 0
         if cmd.status.success() {
             let output = String::from_utf8(cmd.stdout);
-            Ok(output.unwrap().to_string())
+            Ok(output.unwrap())
         } else {
             Err("Command failed to run")
         }
