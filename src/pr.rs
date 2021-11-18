@@ -26,11 +26,11 @@ pub mod pull_request_creator {
         // Get a github issue ticket prefix from .env file if it exists. Otherwise return the default value `#`
         let mut pr_prefix = String::from("");
         if !issue_link.is_empty() {
-            let issue_prefix = get_env_value(String::from("ISSUE_PREFIX")).unwrap_or("".to_string());
+            let issue_prefix =
+                get_env_value(String::from("ISSUE_PREFIX")).unwrap_or("".to_string());
             let issue = issue_prefix + issue_link;
             pr_prefix = format!("# Related links\n\n{}\n\n", issue);
-        } 
-        
+        }
 
         // First, define a string variable to store all the commit logs from running `get_commit_logs` function.
         let commit_logs = get_commit_logs(base);
