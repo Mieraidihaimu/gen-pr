@@ -21,7 +21,7 @@ struct CustomOpt {
     title: String,
 
     /// Set Pull request linked issue
-    #[structopt(short = "i", long = "issue-link")]
+    #[structopt(short = "i", long = "issue-link", default_value = "")]
     issue_link: String,
 
     /// Set extra description
