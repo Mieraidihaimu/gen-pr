@@ -141,7 +141,7 @@ pub mod pull_request_creator {
         }
 
         // Split output into lines, and each line runs the `format_commit_log` function.
-        let lines = output.split("\n").map(|line| format_commit_log(line));
+        let lines = output.split('\n').map(|line| format_commit_log(line));
 
         // Join the lines with `\n` and return the result.
         return Ok(lines.collect::<Vec<String>>().join("\n"));
@@ -159,9 +159,9 @@ pub mod pull_request_creator {
         // check the cmd status code and return the error if the status code is not 0
         if cmd.status.success() {
             let output = String::from_utf8(cmd.stdout);
-            return Ok(format!("{}", output.unwrap()));
+            Ok(output.unwrap().to_string())
         } else {
-            return Err("Command failed to run");
+            Err("Command failed to run")
         }
     }
 
@@ -169,15 +169,15 @@ pub mod pull_request_creator {
     fn get_pr_details(is_feature_branch: bool) -> (String, String) {
         // If the branch is a feature branch, return the feature branch template.
         if is_feature_branch {
-            return (
+            (
                 String::from("As pet ticket above, Product wants to improve this feature, hence we are ..."), 
                 String::from("Normal|Dark Mode|Accessibility |RTL\n---|---|---|---\n<img src= width=200 />|<img src= width=200 />|<img src= width=200 />|<img src= width=200 />\n")
-            );
+            )
         } else {
-            return (
+            (
                 String::from("As pet ticket above, we need to fix the defect in this release."),
                 String::from("Before|After\n-|-\n<img src= width=200 />|<img src= width=200 />\n"),
-            );
+            )
         }
     }
 
@@ -189,7 +189,7 @@ pub mod pull_request_creator {
     // Function: input a String key name, and return the value to that key from .env file
     fn get_env_value(key: String) -> Result<String, &'static str> {
         // Check if file exists
-        if !fs::metadata(".env").is_ok() {
+        if fs::metadata(".env").is_err() {
             return Err("No .env file found");
         }
 
@@ -197,11 +197,11 @@ pub mod pull_request_creator {
         let env_file = fs::read_to_string(".env").unwrap();
 
         // Get the value of the key from the HashMap
-        let line = env_file.split("\n").find(|line| line.contains(&key));
+        let line = env_file.split('\n').find(|line| line.contains(&key));
 
         // Get the value after splitting value by `=`
         let value = match line {
-            Some(line) => line.split("=").last().unwrap(),
+            Some(line) => line.split('=').last().unwrap(),
             None => return Err("No value found"),
         };
 
@@ -210,7 +210,7 @@ pub mod pull_request_creator {
             return Err("No value found");
         }
 
-        return Ok(value.to_string());
+        Ok(value.to_string())
     }
 
     #[cfg(test)]
