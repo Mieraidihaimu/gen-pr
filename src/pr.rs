@@ -1,8 +1,8 @@
 // Create a module for each pull request
 pub mod pull_request_creator {
+    use std::fs;
     use std::process::Command;
     use std::str;
-    use std::fs;
 
     // Function: takes input base_branch, title, issue_link, extra descpription and boolean value is_feature_branch
     pub fn gen<'a>(
@@ -12,15 +12,25 @@ pub mod pull_request_creator {
         issue_link: &'a str,
         is_feature_branch: bool,
         is_open_url: bool,
-        is_debug: bool
+        is_debug: bool,
     ) {
         // Get a base branch name from .env file if it exists. Otherwise return the default value `main`
-        let env_base_branch = get_env_value(String::from("BASE_BRANCH")).unwrap_or("main".to_string());
-        let base = if base_branch.is_empty() { &env_base_branch } else { base_branch };
+        let env_base_branch =
+            get_env_value(String::from("BASE_BRANCH")).unwrap_or("main".to_string());
+        let base = if base_branch.is_empty() {
+            &env_base_branch
+        } else {
+            base_branch
+        };
 
         // Get a github issue ticket prefix from .env file if it exists. Otherwise return the default value `#`
-        let issue_prefix = get_env_value(String::from("ISSUE_PREFIX")).unwrap_or("".to_string());
-        let issue = issue_prefix + issue_link;
+        let mut pr_prefix = String::from("");
+        if !issue_link.is_empty() {
+            let issue_prefix = get_env_value(String::from("ISSUE_PREFIX")).unwrap_or("".to_string());
+            let issue = issue_prefix + issue_link;
+            pr_prefix = format!("# Related links\n\n{}\n\n", issue);
+        } 
+        
 
         // First, define a string variable to store all the commit logs from running `get_commit_logs` function.
         let commit_logs = get_commit_logs(base);
@@ -36,8 +46,8 @@ pub mod pull_request_creator {
         let pr_details = get_pr_details(is_feature_branch);
 
         let pr_description = format!(
-            "# Related links\n\n{}\n\n# Why\n\n{}\n\n# How\n\nChanges included in this pull request:\n{}\n\n{}\n#Screenshots\n\n{}\n\n",
-            issue.to_string(),
+            "{}# Why\n\n{}\n\n# How\n\nChanges included in this pull request:\n{}\n\n{}\n#Screenshots\n\n{}\n\n",
+            pr_prefix.to_string(),
             pr_details.0.to_string(),
             logs.to_string(),
             extra_description.to_string(),
@@ -46,16 +56,16 @@ pub mod pull_request_creator {
 
         log_debug("Successfully prepared pull request description", is_debug);
 
-        // Then create a pull request with the `create_pull_request` function. 
-        let pr = PullRequest{
+        // Then create a pull request with the `create_pull_request` function.
+        let pr = PullRequest {
             title: title.to_string(),
             pr_description: pr_description,
             base_branch: base.to_string(),
         };
-                
+
         let run_create = pr.create(is_debug);
 
-        if run_create.is_err(){
+        if run_create.is_err() {
             log_debug(run_create.unwrap_err(), is_debug);
             return;
         }
@@ -74,11 +84,11 @@ pub mod pull_request_creator {
     struct PullRequest {
         title: String,
         pr_description: String,
-        base_branch: String
+        base_branch: String,
     }
 
     // Add implemntation for the PullRequest struct
-    impl PullRequest {        
+    impl PullRequest {
         // Function: create a pull request from the base branch to the head branch, and takes description, title, and base branch as input
         fn create(&self, is_debug: bool) -> Result<String, &'static str> {
             // Push the current branch to Github repository.
@@ -88,14 +98,18 @@ pub mod pull_request_creator {
                 // Return the error.
                 return Err("Failed to push the branch.");
             }
-          
-            log_debug("Successfully pushed pull request to remote branch", is_debug);
+
+            log_debug(
+                "Successfully pushed pull request to remote branch",
+                is_debug,
+            );
 
             // The variable is initialized with the command to create the pull request using Github CLI
             let create_pr_command = format!(
                 "gh pr create -t \"{}\" -b \"{}\" -B \"{}\" -d -a @me",
                 self.title, self.pr_description, self.base_branch
-            ).to_string();
+            )
+            .to_string();
 
             log_debug(&create_pr_command, is_debug);
 
@@ -125,10 +139,10 @@ pub mod pull_request_creator {
         if output.is_empty() {
             return Err("No commit logs found");
         }
-        
+
         // Split output into lines, and each line runs the `format_commit_log` function.
         let lines = output.split("\n").map(|line| format_commit_log(line));
-        
+
         // Join the lines with `\n` and return the result.
         return Ok(lines.collect::<Vec<String>>().join("\n"));
     }
@@ -141,7 +155,6 @@ pub mod pull_request_creator {
             .arg(command)
             .output()
             .expect("Failed to run command");
-
 
         // check the cmd status code and return the error if the status code is not 0
         if cmd.status.success() {
@@ -162,8 +175,8 @@ pub mod pull_request_creator {
             );
         } else {
             return (
-                String::from("As pet ticket above, we need to fix the defect in this release."), 
-                String::from("Before|After\n-|-\n<img src= width=200 />|<img src= width=200 />\n")
+                String::from("As pet ticket above, we need to fix the defect in this release."),
+                String::from("Before|After\n-|-\n<img src= width=200 />|<img src= width=200 />\n"),
             );
         }
     }
@@ -256,7 +269,10 @@ pub mod pull_request_creator {
         fn test_git_pr_details_feature_branch() {
             let result = get_pr_details(true);
 
-            assert_eq!(result.0, "As pet ticket above, Product wants to improve this feature, hence we are ...");
+            assert_eq!(
+                result.0,
+                "As pet ticket above, Product wants to improve this feature, hence we are ..."
+            );
             assert_eq!(result.1, "Normal|Dark Mode|Accessibility |RTL\n---|---|---|---\n<img src= width=200 />|<img src= width=200 />|<img src= width=200 />|<img src= width=200 />\n");
         }
 
@@ -265,8 +281,14 @@ pub mod pull_request_creator {
         fn test_git_pr_details_not_feature_branch() {
             let result = get_pr_details(false);
 
-            assert_eq!(result.0, "As pet ticket above, we need to fix the defect in this release.");
-            assert_eq!(result.1, "Before|After\n-|-\n<img src= width=200 />|<img src= width=200 />\n");
+            assert_eq!(
+                result.0,
+                "As pet ticket above, we need to fix the defect in this release."
+            );
+            assert_eq!(
+                result.1,
+                "Before|After\n-|-\n<img src= width=200 />|<img src= width=200 />\n"
+            );
         }
     }
 }
