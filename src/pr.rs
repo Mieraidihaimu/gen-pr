@@ -169,12 +169,12 @@ pub mod pull_request_creator {
         // If the branch is a feature branch, return the feature branch template.
         if is_feature_branch {
             (
-                String::from("As pet ticket above, Product wants to improve this feature, hence we are ..."), 
+                String::from("As per ticket above, Product wants to improve this feature, hence we are ..."), 
                 String::from("Normal|Dark Mode|Accessibility |RTL\n---|---|---|---\n<img src= width=200 />|<img src= width=200 />|<img src= width=200 />|<img src= width=200 />\n")
             )
         } else {
             (
-                String::from("As pet ticket above, we need to fix the defect in this release."),
+                String::from("As per ticket above, we need to fix the defect in this release."),
                 String::from("Before|After\n-|-\n<img src= width=200 />|<img src= width=200 />\n"),
             )
         }
