@@ -270,7 +270,7 @@ pub mod pull_request_creator {
 
             assert_eq!(
                 result.0,
-                "As pet ticket above, Product wants to improve this feature, hence we are ..."
+                "As per ticket above, Product wants to improve this feature, hence we are ..."
             );
             assert_eq!(result.1, "Normal|Dark Mode|Accessibility |RTL\n---|---|---|---\n<img src= width=200 />|<img src= width=200 />|<img src= width=200 />|<img src= width=200 />\n");
         }
@@ -282,7 +282,7 @@ pub mod pull_request_creator {
 
             assert_eq!(
                 result.0,
-                "As pet ticket above, we need to fix the defect in this release."
+                "As per ticket above, we need to fix the defect in this release."
             );
             assert_eq!(
                 result.1,
